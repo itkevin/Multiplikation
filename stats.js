@@ -1,15 +1,9 @@
-function showStats() {
-    document.getElementById("game-view").style.display = "none";
-    document.getElementById("stats-view").style.display = "block";
+document.addEventListener('DOMContentLoaded', (event) => {
     loadStats();
-}
+});
 
-function loadStats() {
-    currentPlayer = document.getElementById("player-name").value.trim();
-    const stats =
-        JSON.parse(
-            localStorage.getItem(`multiplicationStats_${currentPlayer}`)
-        ) || [];
+function loadStats(playerName) {
+    const stats = JSON.parse(localStorage.getItem(`multiplicationStats_${playerName}`)) || [];
     const statsBody = document.getElementById("stats-body");
     const heatMapBody = document.getElementById("heat-map-body");
     const totalCount = document.getElementById("total-count");
@@ -17,7 +11,7 @@ function loadStats() {
     const groupedStats = {};
 
     // Set the player's name in the stats view
-    statsPlayerName.textContent = currentPlayer;
+    statsPlayerName.textContent = playerName;
 
     totalCount.innerHTML = stats.length;
 
@@ -132,15 +126,13 @@ function loadStats() {
     // Display sorted stats
     sortedStats.forEach(({ equation, result, count, avgTime }, index) => {
         const row = statsBody.insertRow();
-        const numberCell = row.insertCell(0);
-        const equationCell = row.insertCell(1);
-        const iterationsCell = row.insertCell(2);
-        const avgTimeCell = row.insertCell(3);
-
-        numberCell.textContent = index + 1;
-        equationCell.textContent = `${equation} = ${result}`;
-        iterationsCell.textContent = count;
-        avgTimeCell.textContent = `${formatGermanDecimal(avgTime)}s`;
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${equation} = ${result}</td>
+            <td>${count}</td>
+            <td>${formatGermanDecimal(avgTime)}s</td>
+        `;
+        row.classList.add('align-middle'); // Bootstrap class for vertical alignment
     });
 }
 
@@ -148,3 +140,14 @@ function loadStats() {
 function formatGermanDecimal(number, decimals = 2) {
     return number.toFixed(decimals).replace('.', ',');
 }
+
+function getPlayerNameFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('player') || 'Unknown Player';
+}
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    const playerName = getPlayerNameFromURL();
+    document.getElementById("stats-player-name").textContent = playerName;
+    loadStats(playerName);
+});

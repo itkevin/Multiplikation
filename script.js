@@ -3,36 +3,29 @@ let askedEquations = [];
 let currentEquation;
 let startTime;
 
-function updatePlayerSelectionVisibility() {
-    const playerSelection = document.getElementById("player-selection");
-    const nextButton = document.getElementById("nextButton");
-    playerSelection.style.display =
-        nextButton.style.display !== "none" ? "block" : "none";
-}
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+});
 
-function showGame() {
-    document.getElementById("game-view").style.display = "block";
-    document.getElementById("stats-view").style.display = "none";
-    document.getElementById("nextButton").style.display = "block";
-    document.getElementById("submitButton").style.display = "none";
-    document.getElementById("answer").style.display = "none";
-    document.getElementById("equation").textContent = "";
-    document.getElementById("message").textContent = "";
-    updatePlayerSelectionVisibility();
+function focusInputField() {
+    const answerInput = document.getElementById("answer");
+    answerInput.focus();
+    answerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function startGame() {
     const playerName = document.getElementById("player-name").value.trim();
     if (playerName) {
         currentPlayer = playerName;
-        document.getElementById("player-selection").style.display = "none";
+        document.getElementById("player-selection").style.display = 'none';
+        document.getElementById("game-controls").style.display = 'block';
+        document.getElementById("equation").style.display = 'block';
+        document.getElementById("stats-button").style.display = 'block'; // Show stats button
         nextEquation();
     } else {
         alert("Bitte gib einen Spielernamen ein.");
     }
 }
-
-
 
 function generateEquation() {
     let a, b;
@@ -44,112 +37,94 @@ function generateEquation() {
 }
 
 function displayEquation(equation) {
-    document.getElementById("equation").textContent =
-        `${equation.a} * ${equation.b} = ?`;
+    document.getElementById("equation").textContent = `${equation.a} * ${equation.b} = ?`;
     document.getElementById("answer").value = "";
     startTime = Date.now();
+    focusInputField();
 }
 
 function nextEquation() {
-    const submitButton = document.getElementById("submitButton");
-    const nextButton = document.getElementById("nextButton");
-    const answerInput = document.getElementById("answer");
-    submitButton.style.display = "block";
-    nextButton.style.display = "none";
-    answerInput.style.display = "block";
-    updatePlayerSelectionVisibility();
-
-    // Get stats from localStorage
-    let stats =
-        JSON.parse(localStorage.getItem("multiplicationStats")) || [];
-
-    // Sort stats by time (descending order)
+    let stats = JSON.parse(localStorage.getItem(`multiplicationStats_${currentPlayer}`)) || [];
     stats.sort((a, b) => b.time - a.time);
 
-    // Filter out equations that have been recently asked
     let availableEquations = stats.filter(
-        (stat) =>
-            !askedEquations.some(
-                (asked) =>
-                    asked.a === stat.equation.a && asked.b === stat.equation.b
-            )
+        (stat) => !askedEquations.some(
+            (asked) => asked.a === stat.equation.a && asked.b === stat.equation.b
+        )
     );
 
-    // Check if all possible equations (1-10 x 1-10) have been done
-    const allPossibleEquations = 100; // 10 x 10 = 100 possible equations
-    const uniqueEquations = new Set(
-        stats.map((stat) => `${stat.equation.a}x${stat.equation.b}`)
-    );
+    const allPossibleEquations = 100;
+    const uniqueEquations = new Set(stats.map((stat) => `${stat.equation.a}x${stat.equation.b}`));
 
     if (uniqueEquations.size < allPossibleEquations) {
-        // Not all equations have been done, so we might generate a new one
         let newEquation;
         do {
             newEquation = generateEquation();
-        } while (
-            stats.some(
-                (stat) =>
-                    stat.equation.a === newEquation.a &&
-                    stat.equation.b === newEquation.b
-            )
-        );
+        } while (stats.some((stat) => stat.equation.a === newEquation.a && stat.equation.b === newEquation.b));
 
-        // Decide whether to use the new equation or an existing one
-        if (Math.random() < 0.8 || availableEquations.length === 0) {
-            currentEquation = newEquation;
-        } else {
-            currentEquation = availableEquations[0].equation;
-        }
+        currentEquation = Math.random() < 0.8 || availableEquations.length === 0 ? newEquation : availableEquations[0].equation;
     } else if (availableEquations.length > 0) {
-        // All equations have been done, pick from available equations
         currentEquation = availableEquations[0].equation;
     } else {
-        // All equations have been asked recently, pick a random one
-        const randomStat = stats[Math.floor(Math.random() * stats.length)];
-        currentEquation = randomStat.equation;
+        currentEquation = stats[Math.floor(Math.random() * stats.length)].equation;
     }
 
-    // Add the current equation to the asked list
     askedEquations.push(currentEquation);
-
     displayEquation(currentEquation);
-}
-
-function saveResult(equation, time) {
-    const result = { equation, time };
-    let stats =
-        JSON.parse(localStorage.getItem("multiplicationStats")) || [];
-    stats.push(result);
-    localStorage.setItem("multiplicationStats", JSON.stringify(stats));
 }
 
 function submitAnswer() {
     const userAnswer = parseInt(document.getElementById("answer").value);
     const timeTaken = (Date.now() - startTime) / 1000;
     const messageElement = document.getElementById("message");
-    const submitButton = document.getElementById("submitButton");
-    const nextButton = document.getElementById("nextButton");
     const answerInput = document.getElementById("answer");
 
     if (userAnswer === currentEquation.result) {
         messageElement.textContent = `Richtig! Zeit: ${formatGermanDecimal(timeTaken)} sekunden`;
-        messageElement.style.color = "green";
+        messageElement.className = 'alert alert-success';
         saveResult(currentEquation, timeTaken);
-        // Hide submit button and show next button
-        submitButton.style.display = "none";
-        nextButton.style.display = "block";
-        // Focus on the next button
-        nextButton.focus();
+        answerInput.value = "";
+        nextEquation();  // Automatically show next equation
     } else {
         messageElement.textContent = "Leider falsch. Probiere es nochmal!";
-        messageElement.style.color = "red";
+        messageElement.className = 'alert alert-danger';
         answerInput.value = "";
-        // Keep focus on the answer input
-        answerInput.focus();
+        focusInputField();
     }
 }
 
-nextButton.addEventListener("click", () => {
+function saveResult(equation, time) {
+    const result = { equation, time };
+    let stats = JSON.parse(localStorage.getItem(`multiplicationStats_${currentPlayer}`)) || [];
+    stats.push(result);
+    localStorage.setItem(`multiplicationStats_${currentPlayer}`, JSON.stringify(stats));
+}
+
+function formatGermanDecimal(number, decimals = 2) {
+    return number.toFixed(decimals).replace('.', ',');
+}
+
+function updateStatsLink() {
+    const playerName = document.getElementById("player-name").value.trim();
+    const statsLink = document.getElementById("stats-link");
+    statsLink.href = `stats.html?player=${encodeURIComponent(playerName)}`;
+}
+
+document.getElementById("answer").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        const submitButton = document.getElementById("submitButton");
+        if (submitButton.style.display !== 'none') {
+            submitAnswer();
+        } else {
+            nextEquation();
+        }
+    }
+});
+
+document.getElementById("startButton").addEventListener("click", startGame);
+
+document.getElementById("nextButton").addEventListener("click", () => {
     if (!currentPlayer) {
         startGame();
     } else {
@@ -157,59 +132,30 @@ nextButton.addEventListener("click", () => {
     }
 });
 
-submitButton.addEventListener("click", submitAnswer);
+document.getElementById("submitButton").addEventListener("click", submitAnswer);
 
-// Add event listener for keydown on the answer input
-document.getElementById("answer").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-        event.preventDefault();
-        if (submitButton.style.display !== "none") {
-            submitAnswer();
-        } else {
-            nextEquation();
-            submitButton.style.display = "block";
-            nextButton.style.display = "none";
-        }
-    }
-});
+document.getElementById("player-name").addEventListener("input", updateStatsLink);
 
-// Add event listener for keydown on the document
 document.addEventListener("keydown", (event) => {
     const answerInput = document.getElementById("answer");
-
-    // Check if the pressed key is a number (0-9) or backspace
-    if (
-        (event.key >= "0" && event.key <= "9") ||
-        event.key === "Backspace"
-    ) {
-        // If the answer input is not focused, focus it and let the default behavior happen
+    if ((event.key >= "0" && event.key <= "9") || event.key === "Backspace") {
         if (document.activeElement !== answerInput) {
-            answerInput.focus();
-        }
-    } else if (event.key === "Enter") {
-        event.preventDefault();
-        if (submitButton.style.display !== "none") {
-            submitAnswer();
-        } else {
-            nextEquation();
-            submitButton.style.display = "block";
-            nextButton.style.display = "none";
+            focusInputField();
         }
     }
 });
 
-// Modify saveResult function to use player-specific storage
-function saveResult(equation, time) {
-    const result = { equation, time };
-    let stats =
-        JSON.parse(
-            localStorage.getItem(`multiplicationStats_${currentPlayer}`)
-        ) || [];
-    stats.push(result);
-    localStorage.setItem(
-        `multiplicationStats_${currentPlayer}`,
-        JSON.stringify(stats)
-    );
-}
-
-showGame();
+document.addEventListener('DOMContentLoaded', (event) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const playerName = urlParams.get('player');
+    if (playerName) {
+        document.getElementById("player-name").value = playerName;
+        updateStatsLink();
+        startGame();  // Automatically start the game if player name is provided
+    } else {
+        // Hide equation, game controls, and stats button if game hasn't started
+        document.getElementById("equation").style.display = 'none';
+        document.getElementById("game-controls").style.display = 'none';
+        document.getElementById("stats-button").style.display = 'none';
+    }
+});
