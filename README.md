@@ -8,7 +8,7 @@ This project is a fun, interactive multiplication practice game built entirely w
 
 ## 🎮 How to Play
 
-1. Open `index.html` in your web browser.
+1. Open the 📄`index.html` file locally or visit https://itkevin.github.io/Multiplikation/ in your web browser.
 2. Enter your player name.
 3. Click "Rechnen" (Calculate) to start a new equation.
 4. Type your answer and hit Enter or click "Prüfen" (Check).
