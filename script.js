@@ -10,7 +10,13 @@ document.addEventListener('gesturestart', function (e) {
 function focusInputField() {
     const answerInput = document.getElementById("answer");
     answerInput.focus();
-    answerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Scroll to the input field on mobile
+    if (window.innerWidth <= 768) {
+        setTimeout(() => {
+            answerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
 }
 
 function startGame() {
@@ -19,8 +25,8 @@ function startGame() {
         currentPlayer = playerName;
         document.getElementById("player-selection").style.display = 'none';
         document.getElementById("game-controls").style.display = 'block';
-        document.getElementById("equation").style.display = 'block';
-        document.getElementById("stats-button").style.display = 'block'; // Show stats button
+        document.getElementById("equation-message-container").style.display = 'block';
+        document.getElementById("stats-link").style.display = 'inline-block';
         nextEquation();
     } else {
         alert("Bitte gib einen Spielernamen ein.");
@@ -40,12 +46,29 @@ function displayEquation(equation) {
     document.getElementById("equation").textContent = `${equation.a} * ${equation.b} = ?`;
     document.getElementById("answer").value = "";
     startTime = Date.now();
-    focusInputField();
+    
+    // Scroll to the equation on mobile
+    if (window.innerWidth <= 768) {
+        const equationElement = document.getElementById("equation");
+        equationElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Focus on input field after a short delay
+    setTimeout(focusInputField, 300);
 }
+
+function adjustLayout() {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// Call adjustLayout initially and on resize
+window.addEventListener('resize', adjustLayout);
+window.addEventListener('orientationchange', adjustLayout);
+adjustLayout();
 
 function nextEquation() {
     let stats = JSON.parse(localStorage.getItem(`multiplicationStats_${currentPlayer}`)) || [];
-    stats.sort((a, b) => b.time - a.time);
 
     let availableEquations = stats.filter(
         (stat) => !askedEquations.some(
@@ -56,22 +79,33 @@ function nextEquation() {
     const allPossibleEquations = 100;
     const uniqueEquations = new Set(stats.map((stat) => `${stat.equation.a}x${stat.equation.b}`));
 
-    if (uniqueEquations.size < allPossibleEquations) {
+    // Decide whether to generate a new equation or use an existing one
+    if (Math.random() < 0.6 || uniqueEquations.size < allPossibleEquations) {
+        // Generate a new equation
         let newEquation;
+        let attempts = 0;
         do {
             newEquation = generateEquation();
-        } while (stats.some((stat) => stat.equation.a === newEquation.a && stat.equation.b === newEquation.b));
+            attempts++;
+        } while (stats.some((stat) => stat.equation.a === newEquation.a && stat.equation.b === newEquation.b) && attempts < 100);
 
-        currentEquation = Math.random() < 0.8 || availableEquations.length === 0 ? newEquation : availableEquations[0].equation;
-    } else if (availableEquations.length > 0) {
-        currentEquation = availableEquations[0].equation;
+        currentEquation = newEquation;
     } else {
-        currentEquation = stats[Math.floor(Math.random() * stats.length)].equation;
+        // Choose from existing equations
+        if (availableEquations.length > 0 && Math.random() < 0.7) {
+            // Choose from equations not asked in this session
+            currentEquation = availableEquations[Math.floor(Math.random() * availableEquations.length)].equation;
+        } else {
+            // Choose any equation from stats
+            currentEquation = stats[Math.floor(Math.random() * stats.length)].equation;
+        }
     }
 
     askedEquations.push(currentEquation);
     displayEquation(currentEquation);
 }
+
+
 
 function submitAnswer() {
     const userAnswer = parseInt(document.getElementById("answer").value);
@@ -124,16 +158,6 @@ document.getElementById("answer").addEventListener("keydown", (event) => {
 
 document.getElementById("startButton").addEventListener("click", startGame);
 
-document.getElementById("nextButton").addEventListener("click", () => {
-    if (!currentPlayer) {
-        startGame();
-    } else {
-        nextEquation();
-    }
-});
-
-document.getElementById("submitButton").addEventListener("click", submitAnswer);
-
 document.getElementById("player-name").addEventListener("input", updateStatsLink);
 
 document.addEventListener("keydown", (event) => {
@@ -148,14 +172,27 @@ document.addEventListener("keydown", (event) => {
 document.addEventListener('DOMContentLoaded', (event) => {
     const urlParams = new URLSearchParams(window.location.search);
     const playerName = urlParams.get('player');
+    const submitButton = document.getElementById("submitButton");
+
+    submitButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        console.log("Submit button clicked");
+        submitAnswer();
+    });
+
+    submitButton.addEventListener("touchstart", function (e) {
+        e.preventDefault();
+        console.log("Submit button touched");
+        submitAnswer();
+    });
+
     if (playerName) {
         document.getElementById("player-name").value = playerName;
         updateStatsLink();
-        startGame();  // Automatically start the game if player name is provided
     } else {
         // Hide equation, game controls, and stats button if game hasn't started
-        document.getElementById("equation").style.display = 'none';
+        document.getElementById("equation-message-container").style.display = 'none';
         document.getElementById("game-controls").style.display = 'none';
-        document.getElementById("stats-button").style.display = 'none';
+        document.getElementById("stats-link").style.display = 'none';
     }
 });

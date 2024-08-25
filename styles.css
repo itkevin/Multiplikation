@@ -1,13 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Montserrat:wght@600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Montserrat:wght@600;700&display=swap");
 
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   max-width: 100%;
   margin: 0 auto;
   padding: 20px;
   box-sizing: border-box;
   background-color: #f0f2f5;
   color: #333;
+  padding-bottom: 150px;
+}
+
+#equation-message-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+#equation {
+  font-family: "Montserrat", sans-serif;
+  font-size: 36px;
+  font-weight: 600;
+  margin-bottom: 10px;  /* Reduced from 20px */
+  color: #3498db;
+}
+
+#message {
+  width: 100%;
+  max-width: 400px;  /* Adjust as needed */
+}
+
+.alert {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 10px 15px;  /* Reduced padding */
+  margin-bottom: 10px;  /* Reduced from default Bootstrap margin */
 }
 
 #game-view {
@@ -23,14 +52,33 @@ body {
 }
 
 h1 {
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-weight: 700;
   color: #2c3e50;
   margin-bottom: 30px;
 }
 
+#bottom-controls .btn-lg {
+  padding: 0.5rem 1rem;
+  font-size: 1.25rem;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#stats-link {
+  width: 48px;
+  padding: 0;
+  margin: 0;
+}
+
+#stats-link i {
+  font-size: 1.5rem;
+}
+
 #equation {
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 36px;
   font-weight: 600;
   margin-bottom: 20px;
@@ -67,7 +115,7 @@ h1 {
 }
 
 .btn {
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -94,11 +142,6 @@ h1 {
   border-color: #7f8c8d;
 }
 
-#stats-link {
-  display: block;
-  margin-top: 30px;
-}
-
 .alert {
   border-radius: 8px;
   font-weight: 500;
@@ -121,13 +164,13 @@ h1 {
 .heat-map th {
   width: 30px;
   height: 30px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-weight: 600;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   body {
-    padding: 10px;
+    padding-bottom: 200px;
   }
 
   #equation {
@@ -136,5 +179,18 @@ h1 {
 
   h1 {
     font-size: 24px;
+  }
+  
+  #bottom-controls .btn-lg {
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  #stats-link {
+    width: 40px;
+  }
+
+  #stats-link i {
+    font-size: 1.25rem;
   }
 }

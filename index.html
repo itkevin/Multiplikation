@@ -2,10 +2,20 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
     <title>Multiplication Practice Game</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
   </head>
   <body class="d-flex flex-column min-vh-100">
     <div class="container flex-grow-1 d-flex flex-column">
@@ -21,31 +31,45 @@
                 id="player-name"
                 placeholder="Gib deinen Namen ein"
               />
-              <button id="startButton" class="btn btn-primary btn-lg w-100 mt-3">
+              <button
+                id="startButton"
+                class="btn btn-primary btn-lg w-100 mt-3"
+              >
                 Spiel starten
               </button>
             </div>
-            <div id="message" class="alert mb-3" role="alert"></div>
-            <div id="equation" class="h3 mb-3 text-center"></div>
-            <div id="game-controls" class="mb-3 mt-auto" style="display: none;">
-              <input
-                type="number"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                class="form-control form-control-lg mb-2"
-                id="answer"
-                placeholder="Deine Antwort"
-              />
-              <button id="submitButton" class="btn btn-primary btn-lg w-100">
+            <div id="equation-message-container">
+              <div id="equation" class="h3 mb-2 text-center"></div>
+              <div id="message" class="alert mb-2" role="alert"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="bottom-controls" class="container-fluid fixed-bottom pb-3 pt-3 bg-light">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          <div id="game-controls" style="display: none">
+            <input
+              type="number"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              class="form-control form-control-lg mb-2"
+              id="answer"
+              placeholder="Deine Antwort"
+            />
+            <div class="d-flex align-items-stretch">
+              <button id="submitButton" class="btn btn-primary btn-lg flex-grow-1 me-2">
                 Prüfen
               </button>
-            </div>
-            <div id="stats-button" class="mb-3" style="display: none;">
               <a
                 href="stats.html"
                 id="stats-link"
-                class="btn btn-secondary btn-lg w-100"
-              >Auswertung</a>
+                class="btn btn-secondary btn-lg d-flex align-items-center justify-content-center"
+                title="Auswertung"
+              >
+                <i class="fas fa-chart-bar"></i>
+              </a>
             </div>
           </div>
         </div>
