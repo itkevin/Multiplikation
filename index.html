@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multiplication Practice Game</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      #game-view {
+        text-align: center;
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      #equation {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      #input-container,
+      #next-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      #answer {
+        width: 100px;
+        text-align: center;
+        margin-right: 10px;
+      }
+
+      input,
+      button {
+        font-size: 18px;
+        padding: 5px 10px;
+      }
+      #stats-link {
+        display: block;
+        margin-top: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .heat-map td {
+        width: 30px;
+        height: 30px;
+        position: relative;
+      }
+      .heat-map td span {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 12px;
+      }
+      .heat-map th {
+        width: 30px;
+        height: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-view">
+      <h1>Multiplizieren</h1>
+      <div id="player-selection" style="display: none">
+        <label for="player-name">Spielername:</label>
+        <input
+          type="text"
+          id="player-name"
+          placeholder="Gib deinen Namen ein"
+        />
+      </div>
+      <div id="message"></div>
+      <div id="equation"></div>
+      <div id="input-container">
+        <input
+          type="number"
+          id="answer"
+          placeholder="Deine Antwort"
+          style="display: none"
+        />
+        <button id="submitButton" style="display: none">Prüfen</button>
+      </div>
+      <div id="next-container">
+        <button id="nextButton">Rechnen</button>
+      </div>
+      <a onclick="showStats(); return false;" href="#" id="stats-link"
+        >Auswertung</a
+      >
+    </div>
+
+    <div id="stats-view" style="display: none">
+      <h1>Auswertung - Multiplizieren</h1>
+      <h2>Spieler: <span id="stats-player-name"></span></h2>
+      <span
+        >Du hast bereits <span id="total-count"></span> Aufgaben gelöst.</span
+      >
+      <a onclick="showGame(); return false;" href="#">Zum Spiel</a>
+      <h2>Heat Map</h2>
+      <table class="heat-map" id="heat-map">
+        <thead>
+          <tr>
+            <th></th>
+            <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+            <th>5</th>
+            <th>6</th>
+            <th>7</th>
+            <th>8</th>
+            <th>9</th>
+            <th>10</th>
+          </tr>
+        </thead>
+        <tbody id="heat-map-body">
+          <tr id="number-heat-map-row">
+            <th>Gruppiert</th>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Statistik</h2>
+      <table id="stats-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Rechnung</th>
+            <th>Wie oft berechnet</th>
+            <th>Zeit benötigt</th>
+          </tr>
+        </thead>
+        <tbody id="stats-body"></tbody>
+      </table>
+      <a onclick="showGame(); return false;" href="#">Zum Spiel</a>
+    </div>
+
+    <script>
+      let currentPlayer = "";
+      let askedEquations = [];
+      let currentEquation;
+      let startTime;
+
+      function updatePlayerSelectionVisibility() {
+        const playerSelection = document.getElementById("player-selection");
+        const nextButton = document.getElementById("nextButton");
+        playerSelection.style.display =
+          nextButton.style.display !== "none" ? "block" : "none";
+      }
+
+      function showGame() {
+        document.getElementById("game-view").style.display = "block";
+        document.getElementById("stats-view").style.display = "none";
+        document.getElementById("nextButton").style.display = "block";
+        document.getElementById("submitButton").style.display = "none";
+        document.getElementById("answer").style.display = "none";
+        document.getElementById("equation").textContent = "";
+        document.getElementById("message").textContent = "";
+        updatePlayerSelectionVisibility();
+      }
+
+      function startGame() {
+        const playerName = document.getElementById("player-name").value.trim();
+        if (playerName) {
+          currentPlayer = playerName;
+          document.getElementById("player-selection").style.display = "none";
+          nextEquation();
+        } else {
+          alert("Bitte gib einen Spielernamen ein.");
+        }
+      }
+
+      function showStats() {
+        document.getElementById("game-view").style.display = "none";
+        document.getElementById("stats-view").style.display = "block";
+        loadStats();
+      }
+
+      function generateEquation() {
+        let a, b;
+        do {
+          a = Math.floor(Math.random() * 10) + 1;
+          b = Math.floor(Math.random() * 10) + 1;
+        } while (a * b > 100);
+        return { a, b, result: a * b };
+      }
+
+      function displayEquation(equation) {
+        document.getElementById("equation").textContent =
+          `${equation.a} * ${equation.b} = ?`;
+        document.getElementById("answer").value = "";
+        startTime = Date.now();
+      }
+
+      function nextEquation() {
+        const submitButton = document.getElementById("submitButton");
+        const nextButton = document.getElementById("nextButton");
+        const answerInput = document.getElementById("answer");
+        submitButton.style.display = "block";
+        nextButton.style.display = "none";
+        answerInput.style.display = "block";
+        updatePlayerSelectionVisibility();
+
+        // Get stats from localStorage
+        let stats =
+          JSON.parse(localStorage.getItem("multiplicationStats")) || [];
+
+        // Sort stats by time (descending order)
+        stats.sort((a, b) => b.time - a.time);
+
+        // Filter out equations that have been recently asked
+        let availableEquations = stats.filter(
+          (stat) =>
+            !askedEquations.some(
+              (asked) =>
+                asked.a === stat.equation.a && asked.b === stat.equation.b
+            )
+        );
+
+        // Check if all possible equations (1-10 x 1-10) have been done
+        const allPossibleEquations = 100; // 10 x 10 = 100 possible equations
+        const uniqueEquations = new Set(
+          stats.map((stat) => `${stat.equation.a}x${stat.equation.b}`)
+        );
+
+        if (uniqueEquations.size < allPossibleEquations) {
+          // Not all equations have been done, so we might generate a new one
+          let newEquation;
+          do {
+            newEquation = generateEquation();
+          } while (
+            stats.some(
+              (stat) =>
+                stat.equation.a === newEquation.a &&
+                stat.equation.b === newEquation.b
+            )
+          );
+
+          // Decide whether to use the new equation or an existing one
+          if (Math.random() < 0.8 || availableEquations.length === 0) {
+            currentEquation = newEquation;
+          } else {
+            currentEquation = availableEquations[0].equation;
+          }
+        } else if (availableEquations.length > 0) {
+          // All equations have been done, pick from available equations
+          currentEquation = availableEquations[0].equation;
+        } else {
+          // All equations have been asked recently, pick a random one
+          const randomStat = stats[Math.floor(Math.random() * stats.length)];
+          currentEquation = randomStat.equation;
+        }
+
+        // Add the current equation to the asked list
+        askedEquations.push(currentEquation);
+
+        displayEquation(currentEquation);
+      }
+
+      function saveResult(equation, time) {
+        const result = { equation, time };
+        let stats =
+          JSON.parse(localStorage.getItem("multiplicationStats")) || [];
+        stats.push(result);
+        localStorage.setItem("multiplicationStats", JSON.stringify(stats));
+      }
+
+      function submitAnswer() {
+        const userAnswer = parseInt(document.getElementById("answer").value);
+        const timeTaken = (Date.now() - startTime) / 1000;
+        const messageElement = document.getElementById("message");
+        const submitButton = document.getElementById("submitButton");
+        const nextButton = document.getElementById("nextButton");
+        const answerInput = document.getElementById("answer");
+
+        if (userAnswer === currentEquation.result) {
+          messageElement.textContent = `Richtig! Zeit: ${formatGermanDecimal(timeTaken)} sekunden`;
+          messageElement.style.color = "green";
+          saveResult(currentEquation, timeTaken);
+          // Hide submit button and show next button
+          submitButton.style.display = "none";
+          nextButton.style.display = "block";
+          // Focus on the next button
+          nextButton.focus();
+        } else {
+          messageElement.textContent = "Leider falsch. Probiere es nochmal!";
+          messageElement.style.color = "red";
+          answerInput.value = "";
+          // Keep focus on the answer input
+          answerInput.focus();
+        }
+      }
+
+      nextButton.addEventListener("click", () => {
+        if (!currentPlayer) {
+          startGame();
+        } else {
+          nextEquation();
+        }
+      });
+
+      submitButton.addEventListener("click", submitAnswer);
+
+      // Add event listener for keydown on the answer input
+      document.getElementById("answer").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          if (submitButton.style.display !== "none") {
+            submitAnswer();
+          } else {
+            nextEquation();
+            submitButton.style.display = "block";
+            nextButton.style.display = "none";
+          }
+        }
+      });
+
+      // Add event listener for keydown on the document
+      document.addEventListener("keydown", (event) => {
+        const answerInput = document.getElementById("answer");
+
+        // Check if the pressed key is a number (0-9) or backspace
+        if (
+          (event.key >= "0" && event.key <= "9") ||
+          event.key === "Backspace"
+        ) {
+          // If the answer input is not focused, focus it and let the default behavior happen
+          if (document.activeElement !== answerInput) {
+            answerInput.focus();
+          }
+        } else if (event.key === "Enter") {
+          event.preventDefault();
+          if (submitButton.style.display !== "none") {
+            submitAnswer();
+          } else {
+            nextEquation();
+            submitButton.style.display = "block";
+            nextButton.style.display = "none";
+          }
+        }
+      });
+
+      // Modify saveResult function to use player-specific storage
+      function saveResult(equation, time) {
+        const result = { equation, time };
+        let stats =
+          JSON.parse(
+            localStorage.getItem(`multiplicationStats_${currentPlayer}`)
+          ) || [];
+        stats.push(result);
+        localStorage.setItem(
+          `multiplicationStats_${currentPlayer}`,
+          JSON.stringify(stats)
+        );
+      }
+
+      function loadStats() {
+        currentPlayer = document.getElementById("player-name").value.trim();
+        const stats =
+          JSON.parse(
+            localStorage.getItem(`multiplicationStats_${currentPlayer}`)
+          ) || [];
+        const statsBody = document.getElementById("stats-body");
+        const heatMapBody = document.getElementById("heat-map-body");
+        const totalCount = document.getElementById("total-count");
+        const statsPlayerName = document.getElementById("stats-player-name");
+        const groupedStats = {};
+
+        // Set the player's name in the stats view
+        statsPlayerName.textContent = currentPlayer;
+
+        totalCount.innerHTML = stats.length;
+
+        // Group stats by equation
+        stats.forEach((stat) => {
+          const equation = `${stat.equation.a} * ${stat.equation.b}`;
+          if (!groupedStats[equation]) {
+            groupedStats[equation] = {
+              count: 0,
+              totalTime: 0,
+              result: stat.equation.result,
+              a: stat.equation.a,
+              b: stat.equation.b,
+            };
+          }
+          groupedStats[equation].count++;
+          groupedStats[equation].totalTime += stat.time;
+        });
+
+        // Convert groupedStats to an array and calculate average time
+        const sortedStats = Object.values(groupedStats).map((data) => ({
+          equation: `${data.a} × ${data.b}`,
+          result: data.result,
+          count: data.count,
+          avgTime: data.totalTime / data.count,
+          a: data.a,
+          b: data.b,
+        }));
+
+        sortedStats.sort((a, b) => b.avgTime - a.avgTime);
+
+        // Clear existing table rows
+        statsBody.innerHTML = "";
+        heatMapBody.innerHTML = "";
+
+        // Create heat map for individual numbers
+        const numberHeatMapRow = document.createElement("tr");
+        numberHeatMapRow.id = "number-heat-map-row";
+        numberHeatMapRow.innerHTML = "<th>Gruppiert</th>";
+        heatMapBody.appendChild(numberHeatMapRow);
+
+        const numberData = Array(10)
+          .fill()
+          .map(() => ({ totalTime: 0, count: 0 }));
+
+        sortedStats.forEach((stat) => {
+          numberData[stat.a - 1].totalTime += stat.avgTime;
+          numberData[stat.a - 1].count++;
+          numberData[stat.b - 1].totalTime += stat.avgTime;
+          numberData[stat.b - 1].count++;
+        });
+
+        const numberAvgTimes = numberData.map((data) =>
+          data.count > 0 ? data.totalTime / data.count : null
+        );
+
+        let minNumberTime = Math.min(
+          ...numberAvgTimes.filter((time) => time !== null)
+        );
+        let maxNumberTime = Math.max(
+          ...numberAvgTimes.filter((time) => time !== null)
+        );
+
+        numberAvgTimes.forEach((time, index) => {
+          const cell = numberHeatMapRow.insertCell();
+          if (time !== null) {
+            const normalizedTime =
+              (time - minNumberTime) / (maxNumberTime - minNumberTime);
+            const red = Math.round(255 * normalizedTime);
+            const green = Math.round(255 * (1 - normalizedTime));
+            cell.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
+            cell.innerHTML = `<span>${formatGermanDecimal(time)}s</span>`;
+          } else {
+            cell.style.backgroundColor = "#f2f2f2";
+            cell.innerHTML = "<span>K.A.</span>";
+          }
+        });
+
+        // Create heat map for individual equations
+        const heatMapData = Array(10)
+          .fill()
+          .map(() => Array(10).fill(null));
+        let minTime = Infinity;
+        let maxTime = 0;
+
+        sortedStats.forEach((stat) => {
+          heatMapData[stat.a - 1][stat.b - 1] = stat.avgTime;
+          minTime = Math.min(minTime, stat.avgTime);
+          maxTime = Math.max(maxTime, stat.avgTime);
+        });
+
+        for (let i = 0; i < 10; i++) {
+          const row = heatMapBody.insertRow();
+          const headerCell = row.insertCell();
+          headerCell.innerHTML = `<th>${i + 1}</th>`;
+          for (let j = 0; j < 10; j++) {
+            const cell = row.insertCell();
+            const time = heatMapData[i][j];
+            if (time !== null) {
+              const normalizedTime = (time - minTime) / (maxTime - minTime);
+              const red = Math.round(255 * normalizedTime);
+              const green = Math.round(255 * (1 - normalizedTime));
+              cell.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
+              cell.innerHTML = `<span>${formatGermanDecimal(time)}s</span>`;
+            } else {
+              cell.style.backgroundColor = "#f2f2f2";
+              cell.innerHTML = "<span>K.A.</span>";
+            }
+          }
+        }
+
+        // Display sorted stats
+        sortedStats.forEach(({ equation, result, count, avgTime }, index) => {
+          const row = statsBody.insertRow();
+          const numberCell = row.insertCell(0);
+          const equationCell = row.insertCell(1);
+          const iterationsCell = row.insertCell(2);
+          const avgTimeCell = row.insertCell(3);
+
+          numberCell.textContent = index + 1;
+          equationCell.textContent = `${equation} = ${result}`;
+          iterationsCell.textContent = count;
+          avgTimeCell.textContent = `${formatGermanDecimal(avgTime)}s`;
+        });
+      }
+
+      // Helper function to format numbers with German decimal notation
+      function formatGermanDecimal(number, decimals = 2) {
+        return number.toFixed(decimals).replace('.', ',');
+      }
+
+      showGame();
+    </script>
+  </body>
+</html>
